@@ -1,35 +1,43 @@
 import { shaderMaterial } from "@react-three/drei";
-import { extend, useFrame, useThree } from "@react-three/fiber";
-import * as THREE from "three";
+import { extend, useFrame, type ThreeElement } from "@react-three/fiber";
+import { useControls } from "leva";
 import { useRef } from "react";
+import * as THREE from "three";
 
-const WaterShaderMaterial = shaderMaterial(
+export const WaterShaderMaterial = shaderMaterial(
   {
     cameraPos: new THREE.Vector3(),
     waterColor: new THREE.Color("#4da6ff"),
     deepWaterColor: new THREE.Color("#003366"),
+
+    // NEW:
+    near: 50,
+    far: 300,
   },
-  // vertex shader
+  // vertex shader...
   `
     varying vec3 vWorldPos;
-
     void main() {
       vec4 worldPos = modelMatrix * vec4(position, 1.0);
       vWorldPos = worldPos.xyz;
       gl_Position = projectionMatrix * viewMatrix * worldPos;
     }
   `,
-  // fragment shader
+  // fragment shader...
   `
     uniform vec3 cameraPos;
     uniform vec3 waterColor;
     uniform vec3 deepWaterColor;
+    uniform float near;
+    uniform float far;
+
     varying vec3 vWorldPos;
 
     void main() {
       float dist = distance(cameraPos, vWorldPos);
 
-      float t = smoothstep(0.0, 1.0, dist);
+      // use the new dynamic params
+      float t = smoothstep(near, far, dist);
 
       vec3 finalColor = mix(waterColor, deepWaterColor, t);
 
@@ -38,22 +46,33 @@ const WaterShaderMaterial = shaderMaterial(
   `
 );
 
+declare module "@react-three/fiber" {
+  interface ThreeElements {
+    waterShaderMaterial: ThreeElement<typeof WaterShaderMaterial>;
+  }
+}
+
 extend({ WaterShaderMaterial });
 
-export default function WaterMaterial({ base = "#65e3ff", deep = "#003366" }) {
-  const ref = useRef(null);
-  const { camera } = useThree();
+export default function WaterMaterial({ base = "#65e3ff", deep = "#308be0" }) {
+  const { near, far } = useControls({
+    near: { value: 3, min: 0, max: 20 },
+    far: { value: 12, min: 0, max: 100 },
+  });
+  const ref = useRef<THREE.ShaderMaterial>(null);
 
-  useFrame(() => {
+  useFrame(({ camera }) => {
     if (!ref.current) return;
-    ref.current.cameraPos.copy(camera.position);
+    ref.current?.uniforms.cameraPos.value.copy(camera.position);
   });
 
   return (
     <waterShaderMaterial
       ref={ref}
-      waterColor={new THREE.Color(base)}
-      deepWaterColor={new THREE.Color(deep)}
+      near={near}
+      far={far}
+      waterColor={new THREE.Color(base).convertLinearToSRGB()}
+      deepWaterColor={new THREE.Color(deep).convertLinearToSRGB()}
     />
   );
 }

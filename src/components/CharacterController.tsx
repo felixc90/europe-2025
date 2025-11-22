@@ -196,10 +196,10 @@ export const CharacterController = () => {
   });
 
   return (
-    <RigidBody colliders={false} lockRotations ref={rb} position={[5, 0, 0]}>
+    <RigidBody colliders={false} lockRotations ref={rb} position={[50, 0, 0]}>
       <group ref={container}>
         <group ref={cameraTarget} position-z={1.5} />
-        <group ref={cameraPosition} position-y={4} position-z={-4} />
+        <group ref={cameraPosition} position-y={5} position-z={-2.5} />
         <group ref={character}>
           <Character scale={0.18} position-y={-0.25} animation={animation} />
         </group>

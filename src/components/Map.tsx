@@ -4,9 +4,9 @@ import WaterMaterial from "../materials/WaterMaterial";
 const Map = () => {
   return (
     <RigidBody colliders="ball" lockTranslations lockRotations>
-      <mesh scale={1.5} position={[0, 0, 0]}>
-        <sphereGeometry />
-        <WaterMaterial base="#ffffff" deep="#ffffff" />
+      <mesh scale={10} position={[0, 0, 0]}>
+        <sphereGeometry args={[1, 64, 64]} />
+        <WaterMaterial />
       </mesh>
     </RigidBody>
   );
