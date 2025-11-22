@@ -1,0 +1,19 @@
+import { OrbitControls } from "@react-three/drei";
+import { Physics } from "@react-three/rapier";
+import { CharacterController } from "./CharacterController";
+import Map from "../components/Map";
+
+const Experience = () => {
+  return (
+    <>
+      <OrbitControls />
+      <color args={["#bdedfc"]} attach="background" />
+      <Physics debug={true} gravity={[0, 0, 0]}>
+        <Map />
+        <CharacterController />
+      </Physics>
+    </>
+  );
+};
+
+export default Experience;
