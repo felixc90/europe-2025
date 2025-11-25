@@ -7,12 +7,10 @@ import * as THREE from "three";
 export const WaterShaderMaterial = shaderMaterial(
   {
     cameraPos: new THREE.Vector3(),
-    waterColor: new THREE.Color("#4da6ff"),
-    deepWaterColor: new THREE.Color("#003366"),
-
-    // NEW:
-    near: 50,
-    far: 300,
+    waterColor: new THREE.Color("#65e3ff"),
+    deepWaterColor: new THREE.Color("#308be0"),
+    near: 3,
+    far: 12,
   },
   // vertex shader...
   `
@@ -35,12 +33,8 @@ export const WaterShaderMaterial = shaderMaterial(
 
     void main() {
       float dist = distance(cameraPos, vWorldPos);
-
-      // use the new dynamic params
       float t = smoothstep(near, far, dist);
-
       vec3 finalColor = mix(waterColor, deepWaterColor, t);
-
       gl_FragColor = vec4(finalColor, 1.0);
     }
   `
@@ -54,16 +48,20 @@ declare module "@react-three/fiber" {
 
 extend({ WaterShaderMaterial });
 
-export default function WaterMaterial({ base = "#65e3ff", deep = "#308be0" }) {
-  const { near, far } = useControls({
+export default function WaterMaterial() {
+  const { near, far, base, deep } = useControls("Water Material", {
+    base: "#65e3ff",
+    deep: "#308be0",
     near: { value: 3, min: 0, max: 20 },
     far: { value: 12, min: 0, max: 100 },
   });
+
   const ref = useRef<THREE.ShaderMaterial>(null);
 
   useFrame(({ camera }) => {
-    if (!ref.current) return;
-    ref.current?.uniforms.cameraPos.value.copy(camera.position);
+    if (ref.current) {
+      ref.current.uniforms.cameraPos.value.copy(camera.position);
+    }
   });
 
   return (

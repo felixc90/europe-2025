@@ -2,6 +2,7 @@ import { useKeyboardControls } from "@react-three/drei";
 import { useFrame } from "@react-three/fiber";
 import {
   CapsuleCollider,
+  interactionGroups,
   RapierRigidBody,
   RigidBody,
 } from "@react-three/rapier";
@@ -196,10 +197,18 @@ export const CharacterController = () => {
   });
 
   return (
-    <RigidBody colliders={false} lockRotations ref={rb} position={[50, 0, 0]}>
+    <RigidBody
+      colliders={false}
+      lockRotations
+      ref={rb}
+      position={[0, 12, 0]}
+      collisionGroups={interactionGroups(1, [0, 1, 2, 3, 4, 5])}
+    >
       <group ref={container}>
         <group ref={cameraTarget} position-z={1.5} />
-        <group ref={cameraPosition} position-y={5} position-z={-2.5} />
+        <group ref={cameraPosition} position-y={5} position-z={-2.5}>
+          <pointLight intensity={100} />
+        </group>
         <group ref={character}>
           <Character scale={0.18} position-y={-0.25} animation={animation} />
         </group>

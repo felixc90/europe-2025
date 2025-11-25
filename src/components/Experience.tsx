@@ -8,6 +8,7 @@ const Experience = () => {
     <>
       <OrbitControls />
       <color args={["#bdedfc"]} attach="background" />
+      <ambientLight intensity={0.1} />
       <Physics debug={true} gravity={[0, 0, 0]}>
         <Map />
         <CharacterController />
