@@ -8,17 +8,20 @@ import {
 } from "@react-three/rapier";
 import { useControls } from "leva";
 import { useRef, useState } from "react";
-import { degToRad } from "three/src/math/MathUtils.js";
+import { degToRad, lerp } from "three/src/math/MathUtils.js";
 import { Character } from "./Character";
 import * as THREE from "three";
+import { COLLISION_GROUPS } from "../constants/CollisionGroups";
+import { Airplane } from "./Airplane";
+import type { UserData } from "../types/UserData";
 
-const normalizeAngle = (angle) => {
+const normalizeAngle = (angle: number) => {
   while (angle > Math.PI) angle -= 2 * Math.PI;
   while (angle < -Math.PI) angle += 2 * Math.PI;
   return angle;
 };
 
-const lerpAngle = (start, end, t) => {
+const lerpAngle = (start: number, end: number, t: number) => {
   start = normalizeAngle(start);
   end = normalizeAngle(end);
 
@@ -33,11 +36,17 @@ const lerpAngle = (start, end, t) => {
   return normalizeAngle(start + (end - start) * t);
 };
 
+const lerpVector = (start: THREE.Vector3, end: THREE.Vector3, t: number) => {
+  return new THREE.Vector3(
+    lerp(start.x, end.x, t),
+    lerp(start.y, end.y, t),
+    lerp(start.z, end.z, t)
+  );
+};
+
 export const CharacterController = () => {
-  const { WALK_SPEED, RUN_SPEED, ROTATION_SPEED } = useControls(
-    "Character Control",
-    {
-      WALK_SPEED: { value: 0.8, min: 0.1, max: 4, step: 0.1 },
+  const { RUN_SPEED, ROTATION_SPEED, AIRPLANE_ALTITUDE, AIRPLANE_SPEED } =
+    useControls("Character Control", {
       RUN_SPEED: { value: 1.6, min: 0.2, max: 12, step: 0.1 },
       ROTATION_SPEED: {
         value: degToRad(0.5),
@@ -45,22 +54,25 @@ export const CharacterController = () => {
         max: degToRad(5),
         step: degToRad(0.1),
       },
-    }
-  );
+      AIRPLANE_ALTITUDE: { value: 12, min: 10, max: 20, step: 0.1 },
+      AIRPLANE_SPEED: { value: 2.5, min: 1, max: 10, step: 0.1 },
+    });
 
   const [, get] = useKeyboardControls();
   const rb = useRef<RapierRigidBody>(null);
   const character = useRef<THREE.Group>(null);
   const container = useRef<THREE.Group>(null);
   const rotationTarget = useRef(0);
-  const cameraTarget = useRef(new THREE.Vector3());
-  const cameraPosition = useRef(new THREE.Vector3());
+  const cameraTarget = useRef<THREE.Group>(null);
+  const cameraPosition = useRef<THREE.Group>(null);
   const cameraWorldPosition = useRef(new THREE.Vector3());
   const cameraLookAtWorldPosition = useRef(new THREE.Vector3());
   const cameraLookAt = useRef(new THREE.Vector3());
   const characterRotationTarget = useRef(0);
+  const lightPosition = useRef<THREE.Group>(null);
 
   const [animation, setAnimation] = useState("idle");
+  const [flying, setFlying] = useState(false); // 'character' or 'airplane'
 
   // https://www.youtube.com/watch?v=TicipSVT-T8
   // Movement
@@ -74,7 +86,7 @@ export const CharacterController = () => {
       if (get().left) movement.x = 1;
       if (get().right) movement.x = -1;
 
-      const speed = get().run ? RUN_SPEED : WALK_SPEED;
+      const speed = flying ? AIRPLANE_SPEED : RUN_SPEED;
 
       if (movement.x !== 0) {
         rotationTarget.current += ROTATION_SPEED * movement.x;
@@ -109,6 +121,11 @@ export const CharacterController = () => {
           setAnimation("walk");
         }
       } else {
+        if (flying) {
+          vel.x = lerp(vel.x, 0, 0.05);
+          vel.y = lerp(vel.y, 0, 0.05);
+          vel.z = lerp(vel.z, 0, 0.05);
+        }
         setAnimation("idle");
       }
       if (character.current) {
@@ -162,14 +179,27 @@ export const CharacterController = () => {
     if (!rb.current) return;
 
     // Gravity
-    rb.current?.applyImpulse(
-      new THREE.Vector3()
-        .copy(rb.current.translation())
-        .negate()
-        .normalize()
-        .multiplyScalar(0.01),
-      true
-    );
+    const currentPos = rb.current.translation();
+
+    if (flying) {
+      const pos = rb.current.translation();
+      const v = new THREE.Vector3(pos.x, pos.y, pos.z);
+      const newPos = v.normalize().multiplyScalar(AIRPLANE_ALTITUDE);
+      rb.current.setTranslation(
+        lerpVector(new THREE.Vector3().copy(pos), newPos, 0.05),
+        true
+      );
+    } else {
+      // CHARACTER MODE: Pull toward surface with gravity
+      rb.current.applyImpulse(
+        new THREE.Vector3()
+          .copy(currentPos)
+          .negate()
+          .normalize()
+          .multiplyScalar(0.01),
+        true
+      );
+    }
 
     // Transform Up
     const gravityUp = new THREE.Vector3()
@@ -196,24 +226,62 @@ export const CharacterController = () => {
     rb.current.setRotation(rotationQuat, true);
   });
 
+  useFrame(({ camera }) => {
+    if (!lightPosition.current) return;
+
+    const direction = new THREE.Vector3(
+      camera.position.x,
+      camera.position.y,
+      camera.position.z
+    ).normalize();
+
+    // Set the light at the fixed altitude in the same direction
+    const fixedLightPos = direction.multiplyScalar(7.5);
+
+    lightPosition.current.position.set(
+      fixedLightPos.x,
+      fixedLightPos.y,
+      fixedLightPos.z
+    );
+  });
+
   return (
     <RigidBody
       colliders={false}
       lockRotations
       ref={rb}
       position={[0, 12, 0]}
-      collisionGroups={interactionGroups(1, [0, 1, 2, 3, 4, 5])}
+      collisionGroups={interactionGroups(
+        [COLLISION_GROUPS.CHARACTER, COLLISION_GROUPS.AIRPLANE],
+        [COLLISION_GROUPS.TERRAIN, COLLISION_GROUPS.WATER]
+      )}
     >
       <group ref={container}>
-        <group ref={cameraTarget} position-z={1.5} />
-        <group ref={cameraPosition} position-y={5} position-z={-2.5}>
+        <group ref={cameraTarget} position-z={0.5} />
+        <group ref={cameraPosition} position-y={5} position-z={-3.5} />
+        <group ref={lightPosition}>
           <pointLight intensity={100} />
         </group>
         <group ref={character}>
-          <Character scale={0.18} position-y={-0.25} animation={animation} />
+          <Airplane scale={0.18} position-y={-0.25} visible={flying} />
+          <Character
+            scale={0.18}
+            position-y={-0.25}
+            animation={animation}
+            visible={!flying}
+          />
         </group>
       </group>
-      <CapsuleCollider args={[0.08, 0.15]} />
+      <CapsuleCollider
+        args={[0.08, 0.15]}
+        onCollisionEnter={({ other }) => {
+          const userData = other.rigidBody?.userData as UserData;
+          if (userData.type == COLLISION_GROUPS.WATER) {
+            setFlying(true);
+          }
+          /* ... */
+        }}
+      />
     </RigidBody>
   );
 };
