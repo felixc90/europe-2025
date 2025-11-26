@@ -27,7 +27,7 @@ const Map = () => {
       />
       <Flag
         spin={-Math.PI / 2}
-        position={new THREE.Vector3(6, -4, -10)}
+        position={new THREE.Vector3(7, -4, -10)}
         texture="/textures/portugal_flag.png"
       />
       <RigidBody
