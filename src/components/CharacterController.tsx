@@ -16,6 +16,8 @@ import { Airplane } from "./Airplane";
 import type { UserData } from "../types/UserData";
 import { lerpAngle, lerpVector } from "../utils/lerp";
 import { alignToSphereNormal } from "../helpers/alignToSphereNormal";
+import Camera from "./Camera";
+import { useCameraStore } from "../stores/cameraStore";
 
 export const CharacterController = () => {
   const { RUN_SPEED, ROTATION_SPEED, AIRPLANE_ALTITUDE, AIRPLANE_SPEED } =
@@ -46,11 +48,12 @@ export const CharacterController = () => {
 
   const [animation, setAnimation] = useState("idle");
   const [flying, setFlying] = useState(false); // 'character' or 'airplane'
+  const { active } = useCameraStore();
 
   // https://www.youtube.com/watch?v=TicipSVT-T8
   // Movement
   useFrame(({ camera }) => {
-    if (rb.current) {
+    if (rb.current && !active) {
       const vel = rb.current.linvel();
       const movement = { x: 0, z: 0 };
 
@@ -194,6 +197,15 @@ export const CharacterController = () => {
       fixedLightPos?.y ?? 0,
       fixedLightPos?.z ?? 0
     );
+
+    if (!cameraTarget.current || !cameraPosition.current) return;
+    const lookAt = new THREE.Vector3().subVectors(
+      cameraTarget.current.position,
+      cameraPosition.current.position
+    );
+
+    // TODO: fix hard coded angle
+    console.log(Math.atan(lookAt.y / lookAt.z));
   });
 
   return (
@@ -207,9 +219,24 @@ export const CharacterController = () => {
         [COLLISION_GROUPS.TERRAIN, COLLISION_GROUPS.WATER]
       )}
     >
+      <group
+        rotation={[0.9075144509356308, 0, 0]}
+        position-y={-1.8}
+        position-z={1.4}
+      >
+        <Camera />
+      </group>
       <group ref={container}>
         <group ref={cameraTarget} position-z={0.5} />
-        <group ref={cameraPosition} position-y={5} position-z={-3.5} />
+        <group ref={cameraPosition} position-y={5} position-z={-3.5}>
+          <group
+            rotation={[0.9075144509356308, 0, 0]}
+            position-y={-1.8}
+            position-z={1.4}
+          >
+            <Camera />
+          </group>
+        </group>
         <group ref={lightPosition}>
           <pointLight intensity={100} />
         </group>

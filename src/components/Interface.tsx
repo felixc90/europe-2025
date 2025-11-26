@@ -1,3 +1,16 @@
+import { useCameraStore } from "../stores/cameraStore";
+
 export default function Interface() {
-  return <div className="interface"></div>;
+  const { active, setActive } = useCameraStore();
+
+  const handleClick = () => {
+    setActive(!active);
+    console.log("Clicked!");
+  };
+
+  return (
+    <div className="interface">
+      <button onClick={handleClick}>TURN CAMERA {active ? "OFF" : "ON"}</button>
+    </div>
+  );
 }

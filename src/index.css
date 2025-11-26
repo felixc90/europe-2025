@@ -20,3 +20,7 @@ body,
   height: 100%;
   pointer-events: none;
 }
+
+.interface button {
+  pointer-events: auto;
+}
