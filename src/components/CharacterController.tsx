@@ -14,35 +14,8 @@ import * as THREE from "three";
 import { COLLISION_GROUPS } from "../constants/CollisionGroups";
 import { Airplane } from "./Airplane";
 import type { UserData } from "../types/UserData";
-
-const normalizeAngle = (angle: number) => {
-  while (angle > Math.PI) angle -= 2 * Math.PI;
-  while (angle < -Math.PI) angle += 2 * Math.PI;
-  return angle;
-};
-
-const lerpAngle = (start: number, end: number, t: number) => {
-  start = normalizeAngle(start);
-  end = normalizeAngle(end);
-
-  if (Math.abs(end - start) > Math.PI) {
-    if (end > start) {
-      start += 2 * Math.PI;
-    } else {
-      end += 2 * Math.PI;
-    }
-  }
-
-  return normalizeAngle(start + (end - start) * t);
-};
-
-const lerpVector = (start: THREE.Vector3, end: THREE.Vector3, t: number) => {
-  return new THREE.Vector3(
-    lerp(start.x, end.x, t),
-    lerp(start.y, end.y, t),
-    lerp(start.z, end.z, t)
-  );
-};
+import { lerpAngle, lerpVector } from "../utils/lerp";
+import { alignToSphereNormal } from "../helpers/alignToSphereNormal";
 
 export const CharacterController = () => {
   const { RUN_SPEED, ROTATION_SPEED, AIRPLANE_ALTITUDE, AIRPLANE_SPEED } =
@@ -55,7 +28,7 @@ export const CharacterController = () => {
         step: degToRad(0.1),
       },
       AIRPLANE_ALTITUDE: { value: 12, min: 10, max: 20, step: 0.1 },
-      AIRPLANE_SPEED: { value: 2.5, min: 1, max: 10, step: 0.1 },
+      AIRPLANE_SPEED: { value: 5, min: 1, max: 10, step: 0.1 },
     });
 
   const [, get] = useKeyboardControls();
@@ -177,6 +150,7 @@ export const CharacterController = () => {
 
   useFrame(() => {
     if (!rb.current) return;
+    console.log(rb.current.translation());
 
     // Gravity
     const currentPos = rb.current.translation();
@@ -190,7 +164,6 @@ export const CharacterController = () => {
         true
       );
     } else {
-      // CHARACTER MODE: Pull toward surface with gravity
       rb.current.applyImpulse(
         new THREE.Vector3()
           .copy(currentPos)
@@ -201,47 +174,25 @@ export const CharacterController = () => {
       );
     }
 
-    // Transform Up
-    const gravityUp = new THREE.Vector3()
-      .copy(rb.current.translation())
-      .normalize();
-
-    const currentRotation = rb.current.rotation();
-    const currentQuat = new THREE.Quaternion(
-      currentRotation.x,
-      currentRotation.y,
-      currentRotation.z,
-      currentRotation.w
+    const rotationQuat = alignToSphereNormal(
+      rb.current.translation() as THREE.Vector3,
+      Math.PI
     );
-
-    const localUp = new THREE.Vector3(0, 1, 0);
-    localUp.applyQuaternion(currentRotation);
-
-    const rotationQuat = new THREE.Quaternion().setFromUnitVectors(
-      localUp,
-      gravityUp
-    );
-
-    rotationQuat.multiply(currentQuat);
     rb.current.setRotation(rotationQuat, true);
   });
 
-  useFrame(({ camera }) => {
+  useFrame(() => {
     if (!lightPosition.current) return;
 
-    const direction = new THREE.Vector3(
-      camera.position.x,
-      camera.position.y,
-      camera.position.z
-    ).normalize();
-
     // Set the light at the fixed altitude in the same direction
-    const fixedLightPos = direction.multiplyScalar(7.5);
+    const fixedLightPos = cameraPosition.current?.position
+      .normalize()
+      .multiplyScalar(7.5);
 
     lightPosition.current.position.set(
-      fixedLightPos.x,
-      fixedLightPos.y,
-      fixedLightPos.z
+      fixedLightPos?.x ?? 0,
+      fixedLightPos?.y ?? 0,
+      fixedLightPos?.z ?? 0
     );
   });
 
@@ -250,7 +201,7 @@ export const CharacterController = () => {
       colliders={false}
       lockRotations
       ref={rb}
-      position={[0, 12, 0]}
+      position={[0, 0, 12]}
       collisionGroups={interactionGroups(
         [COLLISION_GROUPS.CHARACTER, COLLISION_GROUPS.AIRPLANE],
         [COLLISION_GROUPS.TERRAIN, COLLISION_GROUPS.WATER]

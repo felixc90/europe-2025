@@ -2,12 +2,34 @@ import { interactionGroups, RigidBody } from "@react-three/rapier";
 import WaterMaterial from "../materials/WaterMaterial";
 import { useGLTF } from "@react-three/drei";
 import { COLLISION_GROUPS } from "../constants/CollisionGroups";
+import Flag from "./Flag";
+import * as THREE from "three";
 
 const Map = () => {
   const { nodes } = useGLTF("models/world.glb");
   console.log(nodes);
   return (
-    <group rotation={[-Math.PI / 2, 0, Math.PI]}>
+    <group>
+      <Flag
+        spin={0}
+        position={new THREE.Vector3(0, 0.5, 10)}
+        texture="/textures/australia_flag.png"
+      />
+      <Flag
+        spin={0}
+        position={new THREE.Vector3(-8, 6, -6)}
+        texture="/textures/france_flag.png"
+      />
+      <Flag
+        spin={0}
+        position={new THREE.Vector3(-3, -2, -12)}
+        texture="/textures/spain_flag.png"
+      />
+      <Flag
+        spin={-Math.PI / 2}
+        position={new THREE.Vector3(6, -4, -10)}
+        texture="/textures/portugal_flag.png"
+      />
       <RigidBody
         userData={{ type: COLLISION_GROUPS.WATER }}
         colliders="ball"
@@ -43,12 +65,21 @@ const Map = () => {
           <meshLambertMaterial color="#d6c3a6" />
         </primitive>
         <primitive object={nodes.Spain}>
+          <meshLambertMaterial color="#f7a46a" />
+        </primitive>
+        <primitive object={nodes.Spain_base}>
           <meshLambertMaterial color="#d6c3a6" />
         </primitive>
         <primitive object={nodes.Portugal}>
+          <meshLambertMaterial color="#f3c58a" />
+        </primitive>
+        <primitive object={nodes.Portugal_base}>
           <meshLambertMaterial color="#d6c3a6" />
         </primitive>
         <primitive object={nodes.France}>
+          <meshLambertMaterial color="#9fa8ff" />
+        </primitive>
+        <primitive object={nodes.France_base}>
           <meshLambertMaterial color="#d6c3a6" />
         </primitive>
       </RigidBody>

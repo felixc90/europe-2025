@@ -1,6 +1,7 @@
 import { Canvas } from "@react-three/fiber";
 import Experience from "./components/Experience";
 import { KeyboardControls } from "@react-three/drei";
+import Interface from "./components/Interface";
 
 function App() {
   return (
@@ -18,11 +19,12 @@ function App() {
           fov: 45,
           near: 0.1,
           far: 200,
-          position: [0, 0, -5],
+          position: [0, 0, 20],
         }}
       >
         <Experience />
       </Canvas>
+      <Interface />
     </KeyboardControls>
   );
 }

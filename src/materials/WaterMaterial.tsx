@@ -10,7 +10,7 @@ export const WaterShaderMaterial = shaderMaterial(
     waterColor: new THREE.Color("#65e3ff"),
     deepWaterColor: new THREE.Color("#308be0"),
     near: 3,
-    far: 12,
+    far: 15,
   },
   // vertex shader...
   `
@@ -53,7 +53,7 @@ export default function WaterMaterial() {
     base: "#65e3ff",
     deep: "#308be0",
     near: { value: 3, min: 0, max: 20 },
-    far: { value: 12, min: 0, max: 100 },
+    far: { value: 15, min: 0, max: 100 },
   });
 
   const ref = useRef<THREE.ShaderMaterial>(null);
