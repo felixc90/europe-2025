@@ -11,13 +11,16 @@ import { useRef, useState } from "react";
 import { degToRad, lerp } from "three/src/math/MathUtils.js";
 import { Character } from "./Character";
 import * as THREE from "three";
-import { COLLISION_GROUPS } from "../constants/CollisionGroups";
+import { CollisionGroup } from "../constants/CollisionGroup";
 import { Airplane } from "./Airplane";
-import type { UserData } from "../types/UserData";
+import type { UserData } from "../types/rapier";
 import { lerpAngle, lerpVector } from "../utils/lerp";
 import { alignToSphereNormal } from "../helpers/alignToSphereNormal";
 import Camera from "./Camera";
 import { useCameraStore } from "../stores/cameraStore";
+import { CameraState } from "../constants/CameraState";
+import { toVector3 } from "../helpers/toVector3";
+import { toQuaternion } from "../helpers/toQuaternion";
 
 export const CharacterController = () => {
   const { RUN_SPEED, ROTATION_SPEED, AIRPLANE_ALTITUDE, AIRPLANE_SPEED } =
@@ -40,20 +43,24 @@ export const CharacterController = () => {
   const rotationTarget = useRef(0);
   const cameraTarget = useRef<THREE.Group>(null);
   const cameraPosition = useRef<THREE.Group>(null);
+  const cameraRotation = useRef<THREE.Group>(null);
   const cameraWorldPosition = useRef(new THREE.Vector3());
   const cameraLookAtWorldPosition = useRef(new THREE.Vector3());
   const cameraLookAt = useRef(new THREE.Vector3());
+
   const characterRotationTarget = useRef(0);
   const lightPosition = useRef<THREE.Group>(null);
 
   const [animation, setAnimation] = useState("idle");
   const [flying, setFlying] = useState(false); // 'character' or 'airplane'
-  const { active } = useCameraStore();
+  const { cameraState } = useCameraStore();
 
   // https://www.youtube.com/watch?v=TicipSVT-T8
-  // Movement
+  // Update movement
   useFrame(({ camera }) => {
-    if (rb.current && !active) {
+    if (!rb.current) return;
+
+    if (cameraState == CameraState.OFF) {
       const vel = rb.current.linvel();
       const movement = { x: 0, z: 0 };
 
@@ -113,10 +120,12 @@ export const CharacterController = () => {
       }
 
       rb.current.setLinvel(vel, true);
+    } else {
+      rb.current.setLinvel(new THREE.Vector3(0, 0, 0), true);
     }
 
     // CAMERA
-    if (container.current && rb.current) {
+    if (container.current) {
       container.current.rotation.y = THREE.MathUtils.lerp(
         container.current.rotation.y,
         rotationTarget.current,
@@ -151,11 +160,10 @@ export const CharacterController = () => {
     }
   });
 
+  // Update gravity
   useFrame(() => {
     if (!rb.current) return;
-    console.log(rb.current.translation());
 
-    // Gravity
     const currentPos = rb.current.translation();
 
     if (flying) {
@@ -178,12 +186,13 @@ export const CharacterController = () => {
     }
 
     const rotationQuat = alignToSphereNormal(
-      rb.current.translation() as THREE.Vector3,
-      Math.PI
+      toVector3(rb.current.translation()),
+      toQuaternion(rb.current.rotation())
     );
     rb.current.setRotation(rotationQuat, true);
   });
 
+  // Update light position
   useFrame(() => {
     if (!lightPosition.current) return;
 
@@ -197,15 +206,22 @@ export const CharacterController = () => {
       fixedLightPos?.y ?? 0,
       fixedLightPos?.z ?? 0
     );
+  });
 
+  // Update character rotation
+  useFrame(() => {
     if (!cameraTarget.current || !cameraPosition.current) return;
     const lookAt = new THREE.Vector3().subVectors(
       cameraTarget.current.position,
       cameraPosition.current.position
     );
-
-    // TODO: fix hard coded angle
-    console.log(Math.atan(lookAt.y / lookAt.z));
+    if (cameraRotation.current) {
+      cameraRotation.current?.rotation.set(
+        -Math.atan(lookAt.y / lookAt.z),
+        0,
+        0
+      );
+    }
   });
 
   return (
@@ -213,24 +229,19 @@ export const CharacterController = () => {
       colliders={false}
       lockRotations
       ref={rb}
+      rotation={[0, Math.PI, 0]}
       position={[0, 0, 12]}
       collisionGroups={interactionGroups(
-        [COLLISION_GROUPS.CHARACTER, COLLISION_GROUPS.AIRPLANE],
-        [COLLISION_GROUPS.TERRAIN, COLLISION_GROUPS.WATER]
+        [CollisionGroup.CHARACTER, CollisionGroup.AIRPLANE],
+        [CollisionGroup.TERRAIN, CollisionGroup.WATER]
       )}
     >
-      <group
-        rotation={[0.9075144509356308, 0, 0]}
-        position-y={-1.8}
-        position-z={1.4}
-      >
-        <Camera />
-      </group>
       <group ref={container}>
         <group ref={cameraTarget} position-z={0.5} />
         <group ref={cameraPosition} position-y={5} position-z={-3.5}>
           <group
-            rotation={[0.9075144509356308, 0, 0]}
+            ref={cameraRotation}
+            rotation={[0.9, 0, 0]}
             position-y={-1.8}
             position-z={1.4}
           >
@@ -243,6 +254,7 @@ export const CharacterController = () => {
         <group ref={character}>
           <Airplane scale={0.18} position-y={-0.25} visible={flying} />
           <Character
+            rotation={[0, 0, 0]}
             scale={0.18}
             position-y={-0.25}
             animation={animation}
@@ -254,7 +266,7 @@ export const CharacterController = () => {
         args={[0.08, 0.15]}
         onCollisionEnter={({ other }) => {
           const userData = other.rigidBody?.userData as UserData;
-          if (userData.type == COLLISION_GROUPS.WATER) {
+          if (userData.type == CollisionGroup.WATER) {
             setFlying(true);
           }
           /* ... */

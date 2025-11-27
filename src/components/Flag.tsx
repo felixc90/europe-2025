@@ -13,33 +13,34 @@ interface FlagProps {
 
 const Flag = ({ position, texture, spin }: FlagProps) => {
   const FLAGPOLE_HEIGHT = 1.25;
+  const FLAGPOLE_RADIUS = 0.02;
   const FLAG_HEIGHT = 0.4;
   const FLAG_WIDTH = 0.55;
   const textureMap = useTexture(texture);
-  const meshRef = useRef<THREE.Mesh>(null);
-  const flag = useRef<THREE.Group>(null);
-  const timeRef = useRef(0);
+  const flag = useRef<THREE.Mesh>(null);
+  const container = useRef<THREE.Group>(null);
+  const time = useRef(0);
 
-  // Create flag geometry
+  // Create container geometry
   const geometry = useMemo(() => {
     const geo = new THREE.PlaneGeometry(FLAG_WIDTH, FLAG_HEIGHT, 8, 8);
     return geo;
   }, []);
 
-  // Animate the flag
+  // Animate the container
   useFrame((_, delta) => {
-    if (!meshRef.current) return;
+    if (!flag.current) return;
 
-    timeRef.current += delta;
-    const positions = meshRef.current.geometry.attributes.position;
+    time.current += delta;
+    const positions = flag.current.geometry.attributes.position;
 
     for (let i = 0; i < positions.count; i++) {
       const x = positions.getX(i);
       const y = positions.getY(i);
 
       // Create wave effect - waves propagate from left to right
-      const waveX = Math.sin(x * 2 + timeRef.current * 3) * 0.15;
-      const waveY = Math.sin(y * 3 + timeRef.current * 2) * 0.1;
+      const waveX = Math.sin(x * 2 + time.current * 3) * 0.15;
+      const waveY = Math.sin(y * 3 + time.current * 2) * 0.1;
 
       // Amplitude increases with distance from pole (x position)
       const amplitude = (0.5 * (x + FLAG_WIDTH / 2)) / FLAG_WIDTH;
@@ -48,25 +49,38 @@ const Flag = ({ position, texture, spin }: FlagProps) => {
     }
 
     positions.needsUpdate = true;
-    meshRef.current.geometry.computeVertexNormals();
+    flag.current.geometry.computeVertexNormals();
   });
 
   useEffect(() => {
-    if (!flag.current) return;
-    const rotation = alignToSphereNormal(flag.current?.position, spin);
+    if (!container.current) return;
+    const rotation = alignToSphereNormal(
+      container.current?.position,
+      new THREE.Quaternion().setFromEuler(container.current?.rotation)
+    );
 
-    flag.current.setRotationFromQuaternion(rotation);
+    container.current.setRotationFromQuaternion(rotation);
 
     const newPosition = new THREE.Vector3()
-      .copy(flag.current.position)
+      .copy(container.current.position)
       .normalize()
       .multiplyScalar(SPHERE_RADIUS);
-    flag.current.position.copy(newPosition);
-  }, [flag, spin]);
+    container.current.position.copy(newPosition);
+  }, [container, spin]);
 
   return (
-    <group position={position} ref={flag} rotation={[Math.PI / 2, 0, 0]}>
-      <group position={[0, FLAGPOLE_HEIGHT - FLAG_HEIGHT / 2 - 0.05, 0]}>
+    <group
+      position={position}
+      ref={container}
+      rotation={[Math.PI / 2, spin, 0]}
+    >
+      <group
+        position={[
+          FLAG_WIDTH / 2 + FLAGPOLE_RADIUS / 2,
+          FLAGPOLE_HEIGHT - FLAG_HEIGHT / 2 - 0.05,
+          0,
+        ]}
+      >
         <pointLight
           intensity={0.015}
           decay={6}
@@ -79,7 +93,7 @@ const Flag = ({ position, texture, spin }: FlagProps) => {
           color="#ffffff"
           position={[0, 0, -FLAG_WIDTH / 2]}
         />
-        <mesh ref={meshRef} geometry={geometry}>
+        <mesh ref={flag} geometry={geometry}>
           <meshStandardMaterial
             map={textureMap}
             side={THREE.DoubleSide}
@@ -88,10 +102,12 @@ const Flag = ({ position, texture, spin }: FlagProps) => {
           />
         </mesh>
       </group>
-      <group position={[-FLAG_WIDTH / 2, FLAGPOLE_HEIGHT / 2, 0]}>
+      <group position={[FLAGPOLE_RADIUS / 2, FLAGPOLE_HEIGHT / 2, 0]}>
         {/* Pole */}
         <mesh position={[0, 0, 0]}>
-          <cylinderGeometry args={[0.02, 0.02, FLAGPOLE_HEIGHT, 16]} />
+          <cylinderGeometry
+            args={[FLAGPOLE_RADIUS, FLAGPOLE_RADIUS, FLAGPOLE_HEIGHT, 16]}
+          />
           <meshStandardMaterial color="#555" metalness={0.8} roughness={0.2} />
         </mesh>
 

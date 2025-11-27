@@ -1,13 +1,13 @@
 import { interactionGroups, RigidBody } from "@react-three/rapier";
 import WaterMaterial from "../materials/WaterMaterial";
 import { useGLTF } from "@react-three/drei";
-import { COLLISION_GROUPS } from "../constants/CollisionGroups";
+import { CollisionGroup } from "../constants/CollisionGroup";
 import Flag from "./Flag";
 import * as THREE from "three";
 
 const Map = () => {
   const { nodes } = useGLTF("models/world.glb");
-  console.log(nodes);
+
   return (
     <group>
       <Flag
@@ -30,13 +30,23 @@ const Map = () => {
         position={new THREE.Vector3(7, -4, -10)}
         texture="/textures/portugal_flag.png"
       />
+      <Flag
+        spin={-Math.PI / 2}
+        position={new THREE.Vector3(0, 10, 0)}
+        texture="/textures/portugal_flag.png"
+      />
+      <Flag
+        spin={-Math.PI / 2}
+        position={new THREE.Vector3(0, -10, 0)}
+        texture="/textures/portugal_flag.png"
+      />
       <RigidBody
-        userData={{ type: COLLISION_GROUPS.WATER }}
+        userData={{ type: CollisionGroup.WATER }}
         colliders="ball"
         type="fixed"
-        collisionGroups={interactionGroups(COLLISION_GROUPS.WATER, [
-          COLLISION_GROUPS.CHARACTER,
-          COLLISION_GROUPS.AIRPLANE,
+        collisionGroups={interactionGroups(CollisionGroup.WATER, [
+          CollisionGroup.CHARACTER,
+          CollisionGroup.AIRPLANE,
         ])}
       >
         <primitive object={nodes.Sphere}>
@@ -46,10 +56,10 @@ const Map = () => {
       <RigidBody
         colliders="trimesh"
         type="fixed"
-        userData={{ type: COLLISION_GROUPS.TERRAIN }}
-        collisionGroups={interactionGroups(COLLISION_GROUPS.TERRAIN, [
-          COLLISION_GROUPS.CHARACTER,
-          COLLISION_GROUPS.AIRPLANE,
+        userData={{ type: CollisionGroup.TERRAIN }}
+        collisionGroups={interactionGroups(CollisionGroup.TERRAIN, [
+          CollisionGroup.CHARACTER,
+          CollisionGroup.AIRPLANE,
         ])}
       >
         <primitive object={nodes.Australia}>

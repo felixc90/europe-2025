@@ -1,7 +1,0 @@
-export const COLLISION_GROUPS = {
-  DEFAULT: 0,
-  CHARACTER: 1,
-  TERRAIN: 2,
-  WATER: 3,
-  AIRPLANE: 4,
-};
