@@ -1,4 +1,4 @@
-import data from "../../../public/data/data.json";
+import data from "../../data/data.json";
 import { useCameraStore } from "../../stores/cameraStore";
 
 const Home = () => {

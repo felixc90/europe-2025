@@ -1,0 +1,40 @@
+{
+  "items": [
+    {
+      "name": "1_PARIS_FRANCE",
+      "images": ["france_flag"]
+    },
+    {
+      "name": "2_LISBON_PORTUGAL",
+      "images": ["portugal_flag", "tile"]
+    },
+    {
+      "name": "3_PORTO_PORTUGAL",
+      "images": ["portugal_flag"]
+    },
+    {
+      "name": "4_MADEIRA_PORTUGAL",
+      "images": ["portugal_flag"]
+    },
+    {
+      "name": "5_MADRID_SPAIN",
+      "images": ["spain_flag"]
+    },
+    {
+      "name": "6_SEVILLE_SPAIN",
+      "images": ["spain_flag"]
+    },
+    {
+      "name": "7_BARCELONA_SPAIN",
+      "images": ["spain_flag"]
+    },
+    {
+      "name": "8_NICE_FRANCE",
+      "images": ["france_flag"]
+    },
+    {
+      "name": "9_PARIS_FRANCE",
+      "images": ["france_flag"]
+    }
+  ]
+}

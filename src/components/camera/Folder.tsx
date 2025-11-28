@@ -1,5 +1,5 @@
 import { useEffect } from "react";
-import data from "../../../public/data/data.json";
+import data from "../../data/data.json";
 import { useCameraStore } from "../../stores/cameraStore";
 const Folder = () => {
   const { route, setRoute, setPhotos, photos } = useCameraStore();
@@ -41,7 +41,7 @@ const Folder = () => {
             }}
           >
             <img
-              src={`/data/images/${photo.folder}/${photo.name}`}
+              src={`/data/images/${photo.folder}/${photo.name}.png`}
               alt={`Photo from ${photo.folder}`}
             />
             <div className="text-[16px] mt-3">{photo.name}</div>
