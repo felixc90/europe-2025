@@ -1,6 +1,6 @@
 import { CameraState } from "../constants/CameraState";
 import { useCameraStore } from "../stores/cameraStore";
-import CameraUI from "./CameraUI";
+import CameraUI from "./camera/CameraUI";
 
 export default function Interface() {
   const { cameraState, setCameraState } = useCameraStore();

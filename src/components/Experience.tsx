@@ -9,7 +9,7 @@ const Experience = () => {
       <OrbitControls />
       <color args={["#bdedfc"]} attach="background" />
       <ambientLight intensity={0.3} />
-      <Physics debug={true} gravity={[0, 0, 0]}>
+      <Physics debug={false} gravity={[0, 0, 0]}>
         <Map />
         <CharacterController />
       </Physics>

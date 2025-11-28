@@ -242,8 +242,8 @@ export const CharacterController = () => {
           <group
             ref={cameraRotation}
             rotation={[0.9, 0, 0]}
-            position-y={-1.8}
-            position-z={1.4}
+            position-y={-1.6}
+            position-z={1.25}
           >
             <Camera />
           </group>

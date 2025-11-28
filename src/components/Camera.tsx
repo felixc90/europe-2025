@@ -95,7 +95,7 @@ const Camera = () => {
             />
             <mesh>
               <planeGeometry args={[CAMERA_WIDTH, CAMERA_HEIGHT]} />
-              <meshBasicMaterial color="blue" />
+              <meshBasicMaterial color="#121212" />
             </mesh>
           </group>
         </group>

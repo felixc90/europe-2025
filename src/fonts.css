@@ -1,0 +1,13 @@
+@font-face {
+  font-family: "Mondwest";
+  src: url("/fonts/Bitmap Font Pack/PPMondwest-Regular.otf") format("opentype");
+  font-weight: 400;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: "NeueBit";
+  src: url("/fonts/Bitmap Font Pack/PPNeueBit-Bold.otf") format("opentype");
+  font-weight: 700;
+  font-style: normal;
+}

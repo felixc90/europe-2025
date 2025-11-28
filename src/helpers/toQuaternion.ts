@@ -8,6 +8,5 @@ export const toQuaternion = (rotation: RotationLike) => {
     rotation.z,
     rotation.w
   );
-  console.log("res", res);
   return res;
 };
