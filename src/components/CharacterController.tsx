@@ -21,20 +21,33 @@ import { useCameraStore } from "../stores/cameraStore";
 import { CameraState } from "../constants/CameraState";
 import { toVector3 } from "../helpers/toVector3";
 import { toQuaternion } from "../helpers/toQuaternion";
+import { useCharacterStore } from "../stores/characterStore";
+import { SPHERE_RADIUS } from "../constants/Sphere";
 
 export const CharacterController = () => {
-  const { RUN_SPEED, ROTATION_SPEED, AIRPLANE_ALTITUDE, AIRPLANE_SPEED } =
-    useControls("Character Control", {
-      RUN_SPEED: { value: 1.6, min: 0.2, max: 12, step: 0.1 },
-      ROTATION_SPEED: {
-        value: degToRad(0.5),
-        min: degToRad(0.1),
-        max: degToRad(5),
-        step: degToRad(0.1),
-      },
-      AIRPLANE_ALTITUDE: { value: 12, min: 10, max: 20, step: 0.1 },
-      AIRPLANE_SPEED: { value: 5, min: 1, max: 10, step: 0.1 },
-    });
+  const {
+    RUN_SPEED,
+    ROTATION_SPEED,
+    AIRPLANE_ALTITUDE,
+    AIRPLANE_SPEED,
+    USE_CAMERA,
+  } = useControls("Character Control", {
+    RUN_SPEED: { value: 1.6, min: 0.2, max: 12, step: 0.1 },
+    ROTATION_SPEED: {
+      value: degToRad(0.5),
+      min: degToRad(0.1),
+      max: degToRad(5),
+      step: degToRad(0.1),
+    },
+    AIRPLANE_ALTITUDE: {
+      value: SPHERE_RADIUS * 1.25,
+      min: SPHERE_RADIUS,
+      max: SPHERE_RADIUS * 4,
+      step: 2,
+    },
+    AIRPLANE_SPEED: { value: 5, min: 1, max: 10, step: 0.1 },
+    USE_CAMERA: true,
+  });
 
   const [, get] = useKeyboardControls();
   const rb = useRef<RapierRigidBody>(null);
@@ -52,14 +65,18 @@ export const CharacterController = () => {
   const lightPosition = useRef<THREE.Group>(null);
 
   const [animation, setAnimation] = useState("idle");
-  const [flying, setFlying] = useState(false); // 'character' or 'airplane'
   const { cameraState } = useCameraStore();
+  const { flying, setFlying } = useCharacterStore();
 
   // https://www.youtube.com/watch?v=TicipSVT-T8
   // Update movement
   useFrame(({ camera }) => {
     if (!rb.current) return;
-
+    console.log(
+      rb.current.translation().x,
+      rb.current.translation().y,
+      rb.current.translation().z
+    );
     if (cameraState == CameraState.OFF) {
       const vel = rb.current.linvel();
       const movement = { x: 0, z: 0 };
@@ -147,12 +164,12 @@ export const CharacterController = () => {
       camera.updateProjectionMatrix();
     }
 
-    if (cameraPosition.current) {
+    if (cameraPosition.current && USE_CAMERA) {
       cameraPosition.current.getWorldPosition(cameraWorldPosition.current);
       camera.position.lerp(cameraWorldPosition.current, 0.1);
     }
 
-    if (cameraTarget.current) {
+    if (cameraTarget.current && USE_CAMERA) {
       cameraTarget.current.getWorldPosition(cameraLookAtWorldPosition.current);
       cameraLookAt.current.lerp(cameraLookAtWorldPosition.current, 0.1);
 
@@ -229,8 +246,8 @@ export const CharacterController = () => {
       colliders={false}
       lockRotations
       ref={rb}
-      rotation={[0, Math.PI, 0]}
-      position={[0, 0, 12]}
+      rotation={[0, 0.7236, 0]}
+      position={[-18, -12, -14]}
       collisionGroups={interactionGroups(
         [CollisionGroup.CHARACTER, CollisionGroup.AIRPLANE],
         [CollisionGroup.TERRAIN, CollisionGroup.WATER]

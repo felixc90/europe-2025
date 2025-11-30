@@ -7,39 +7,31 @@ import * as THREE from "three";
 
 const Map = () => {
   const { nodes } = useGLTF("models/world.glb");
-
+  console.log(nodes);
   return (
     <group>
-      <Flag
-        spin={0}
-        position={new THREE.Vector3(0, 0.5, 10)}
-        texture="/textures/australia_flag.png"
-      />
-      <Flag
-        spin={0}
-        position={new THREE.Vector3(-8, 6, -6)}
-        texture="/textures/france_flag.png"
-      />
-      <Flag
-        spin={0}
-        position={new THREE.Vector3(-3, -2, -12)}
-        texture="/textures/spain_flag.png"
-      />
-      <Flag
-        spin={-Math.PI / 2}
-        position={new THREE.Vector3(7, -4, -10)}
-        texture="/textures/portugal_flag.png"
-      />
-      <Flag
-        spin={-Math.PI / 2}
-        position={new THREE.Vector3(0, 10, 0)}
-        texture="/textures/portugal_flag.png"
-      />
-      <Flag
-        spin={-Math.PI / 2}
-        position={new THREE.Vector3(0, -10, 0)}
-        texture="/textures/portugal_flag.png"
-      />
+      <group name="flags">
+        <Flag
+          spin={0.5}
+          position={new THREE.Vector3(-16, -10, -16)}
+          texture="/textures/australia_flag.png"
+        />
+        <Flag
+          spin={0}
+          position={new THREE.Vector3(20, 15, -2)}
+          texture="/textures/france_flag.png"
+        />
+        <Flag
+          spin={0}
+          position={new THREE.Vector3(24, 8, 5)}
+          texture="/textures/spain_flag.png"
+        />
+        <Flag
+          spin={0}
+          position={new THREE.Vector3(22, 6, 11)}
+          texture="/textures/portugal_flag.png"
+        />
+      </group>
       <RigidBody
         userData={{ type: CollisionGroup.WATER }}
         colliders="ball"
