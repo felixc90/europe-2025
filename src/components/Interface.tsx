@@ -5,7 +5,7 @@ import CameraUI from "./camera/CameraUI";
 
 export default function Interface() {
   const { cameraState, setCameraState } = useCameraStore();
-  const { flying, setFlying } = useCharacterStore();
+  const { isFlying, setIsFlying } = useCharacterStore();
 
   const handleCameraClick = () => {
     if (cameraState == CameraState.OFF) {
@@ -16,7 +16,7 @@ export default function Interface() {
   };
 
   const handleAirplaneClick = () => {
-    setFlying(!flying);
+    setIsFlying(!isFlying);
   };
 
   return (
@@ -36,7 +36,7 @@ export default function Interface() {
         disabled={cameraState == CameraState.ON}
         onClick={handleAirplaneClick}
       >
-        {flying ? "WALK" : "FLYING"}
+        {isFlying ? "WALK" : "FLY"}
       </button>
       <CameraUI />
     </div>

@@ -2,12 +2,9 @@ import { interactionGroups, RigidBody } from "@react-three/rapier";
 import WaterMaterial from "../materials/WaterMaterial";
 import { useGLTF } from "@react-three/drei";
 import { CollisionGroup } from "../constants/CollisionGroup";
-import { useMapStore } from "../stores/mapStore";
 
 const World = () => {
   const { nodes } = useGLTF("models/world.glb");
-  const { setObjects } = useMapStore();
-  setObjects(nodes);
 
   return (
     <group>

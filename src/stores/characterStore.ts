@@ -1,11 +1,11 @@
 import { create } from "zustand";
 
 interface CharacterState {
-  flying: boolean;
-  setFlying: (state: boolean) => void;
+  isFlying: boolean;
+  setIsFlying: (isFlying: boolean) => void;
 }
 
 export const useCharacterStore = create<CharacterState>()((set) => ({
-  flying: false,
-  setFlying: (flying) => set(() => ({ flying })),
+  isFlying: false,
+  setIsFlying: (isFlying) => set(() => ({ isFlying })),
 }));

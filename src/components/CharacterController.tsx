@@ -66,7 +66,7 @@ export const CharacterController = () => {
 
   const [animation, setAnimation] = useState("idle");
   const { cameraState } = useCameraStore();
-  const { flying, setFlying } = useCharacterStore();
+  const { isFlying } = useCharacterStore();
 
   // https://www.youtube.com/watch?v=TicipSVT-T8
   // Update movement
@@ -86,7 +86,7 @@ export const CharacterController = () => {
       if (get().left) movement.x = 1;
       if (get().right) movement.x = -1;
 
-      const speed = flying ? AIRPLANE_SPEED : RUN_SPEED;
+      const speed = isFlying ? AIRPLANE_SPEED : RUN_SPEED;
 
       if (movement.x !== 0) {
         rotationTarget.current += ROTATION_SPEED * movement.x;
@@ -121,7 +121,7 @@ export const CharacterController = () => {
           setAnimation("walk");
         }
       } else {
-        if (flying) {
+        if (isFlying) {
           vel.x = lerp(vel.x, 0, 0.05);
           vel.y = lerp(vel.y, 0, 0.05);
           vel.z = lerp(vel.z, 0, 0.05);
@@ -183,7 +183,7 @@ export const CharacterController = () => {
 
     const currentPos = rb.current.translation();
 
-    if (flying) {
+    if (isFlying) {
       const pos = rb.current.translation();
       const v = new THREE.Vector3(pos.x, pos.y, pos.z);
       const newPos = v.normalize().multiplyScalar(AIRPLANE_ALTITUDE);
@@ -241,6 +241,11 @@ export const CharacterController = () => {
     }
   });
 
+  // Update character rotation
+  // useFrame(() => {
+  //   console.log(objects);
+  // });
+
   return (
     <RigidBody
       colliders={false}
@@ -269,13 +274,13 @@ export const CharacterController = () => {
           <pointLight intensity={100} />
         </group>
         <group ref={character}>
-          <Airplane scale={0.18} position-y={-0.25} visible={flying} />
+          <Airplane scale={0.18} position-y={-0.25} visible={isFlying} />
           <Character
             rotation={[0, 0, 0]}
             scale={0.18}
             position-y={-0.25}
             animation={animation}
-            visible={!flying}
+            visible={!isFlying}
           />
         </group>
       </group>
@@ -284,7 +289,7 @@ export const CharacterController = () => {
         onCollisionEnter={({ other }) => {
           const userData = other.rigidBody?.userData as UserData;
           if (userData.type == CollisionGroup.WATER) {
-            setFlying(true);
+            // setFlying(true);
           }
           /* ... */
         }}
