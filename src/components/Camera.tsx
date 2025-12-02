@@ -82,7 +82,7 @@ const Camera = () => {
         <group position={[0, CAMERA_HEIGHT / 2 + RADIUS, 0]}>
           <mesh>
             <boxGeometry args={[CAMERA_WIDTH, CAMERA_HEIGHT, CAMERA_DEPTH]} />
-            <meshBasicMaterial color="red" />
+            <meshBasicMaterial color="red" depthTest={false} />
           </mesh>
           <group position={[0, 0, CAMERA_DEPTH / 2 + 0.01]}>
             <group

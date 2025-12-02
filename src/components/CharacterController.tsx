@@ -3,12 +3,18 @@ import { useFrame } from "@react-three/fiber";
 import {
   CapsuleCollider,
   interactionGroups,
+  RapierCollider,
   RapierRigidBody,
   RigidBody,
 } from "@react-three/rapier";
 import { useControls } from "leva";
 import { useRef, useState } from "react";
-import { degToRad, lerp } from "three/src/math/MathUtils.js";
+import {
+  clamp,
+  degToRad,
+  inverseLerp,
+  lerp,
+} from "three/src/math/MathUtils.js";
 import { Character } from "./Character";
 import * as THREE from "three";
 import { CollisionGroup } from "../constants/CollisionGroup";
@@ -23,6 +29,20 @@ import { toVector3 } from "../helpers/toVector3";
 import { toQuaternion } from "../helpers/toQuaternion";
 import { useCharacterStore } from "../stores/characterStore";
 import { SPHERE_RADIUS } from "../constants/Sphere";
+import { useMapStore } from "../stores/mapStore";
+import {
+  MAX_CAMERA_POSITION,
+  MAX_CAPSULE_HALF_HEIGHT,
+  MAX_CAPSULE_RADIUS,
+  MAX_DISTANCE,
+  MAX_SCALE,
+  MIN_CAMERA_POSITION,
+  MIN_CAPSULE_HALF_HEIGHT,
+  MIN_CAPSULE_RADIUS,
+  MIN_DISTANCE,
+  MIN_SCALE,
+  SCALABLE_REGIONS,
+} from "../constants/Scale";
 
 export const CharacterController = () => {
   const {
@@ -51,6 +71,7 @@ export const CharacterController = () => {
 
   const [, get] = useKeyboardControls();
   const rb = useRef<RapierRigidBody>(null);
+  const collider = useRef<RapierCollider>(null);
   const character = useRef<THREE.Group>(null);
   const container = useRef<THREE.Group>(null);
   const rotationTarget = useRef(0);
@@ -67,16 +88,17 @@ export const CharacterController = () => {
   const [animation, setAnimation] = useState("idle");
   const { cameraState } = useCameraStore();
   const { isFlying } = useCharacterStore();
+  const { convexHulls } = useMapStore();
 
   // https://www.youtube.com/watch?v=TicipSVT-T8
   // Update movement
   useFrame(({ camera }) => {
     if (!rb.current) return;
-    console.log(
-      rb.current.translation().x,
-      rb.current.translation().y,
-      rb.current.translation().z
-    );
+    // console.log(
+    //   rb.current.translation().x,
+    //   rb.current.translation().y,
+    //   rb.current.translation().z
+    // );
     if (cameraState == CameraState.OFF) {
       const vel = rb.current.linvel();
       const movement = { x: 0, z: 0 };
@@ -166,6 +188,7 @@ export const CharacterController = () => {
 
     if (cameraPosition.current && USE_CAMERA) {
       cameraPosition.current.getWorldPosition(cameraWorldPosition.current);
+      console.log(cameraPosition.current.position);
       camera.position.lerp(cameraWorldPosition.current, 0.1);
     }
 
@@ -211,18 +234,19 @@ export const CharacterController = () => {
 
   // Update light position
   useFrame(() => {
+    return;
     if (!lightPosition.current) return;
 
     // Set the light at the fixed altitude in the same direction
-    const fixedLightPos = cameraPosition.current?.position
-      .normalize()
-      .multiplyScalar(7.5);
+    // const fixedLightPos = cameraPosition.current?.position
+    //   .normalize()
+    //   .multiplyScalar(7.5);
 
-    lightPosition.current.position.set(
-      fixedLightPos?.x ?? 0,
-      fixedLightPos?.y ?? 0,
-      fixedLightPos?.z ?? 0
-    );
+    // lightPosition.current.position.set(
+    //   fixedLightPos?.x ?? 0,
+    //   fixedLightPos?.y ?? 0,
+    //   fixedLightPos?.z ?? 0
+    // );
   });
 
   // Update character rotation
@@ -241,10 +265,47 @@ export const CharacterController = () => {
     }
   });
 
-  // Update character rotation
-  // useFrame(() => {
-  //   console.log(objects);
-  // });
+  // Update character scale
+  useFrame(() => {
+    const dist = SCALABLE_REGIONS.map((region) => {
+      if (!rb || rb.current == null) return Number.POSITIVE_INFINITY;
+      const position = rb.current.translation();
+      return convexHulls[region].vertices
+        .map((v) => Math.abs(v.point.distanceTo(toVector3(position))))
+        .reduce((prevValue, currValue) => Math.min(prevValue, currValue));
+    }).reduce((prevValue, currValue) => Math.min(prevValue, currValue));
+    console.log(dist);
+
+    const value = clamp(dist, MIN_DISTANCE, MAX_DISTANCE);
+    const t = inverseLerp(MIN_DISTANCE, MAX_DISTANCE, value);
+    if (character.current) {
+      character.current.scale.set(
+        ...lerpVector(MIN_SCALE, MAX_SCALE, t).toArray()
+      );
+    }
+
+    if (collider.current) {
+      collider.current.setHalfHeight(
+        lerp(MIN_CAPSULE_HALF_HEIGHT, MAX_CAPSULE_HALF_HEIGHT, t)
+      );
+      collider.current.setRadius(
+        lerp(MIN_CAPSULE_RADIUS, MAX_CAPSULE_RADIUS, t)
+      );
+    }
+
+    if (cameraPosition.current) {
+      cameraPosition.current.position.set(
+        ...lerpVector(MIN_CAMERA_POSITION, MAX_CAMERA_POSITION, t).toArray()
+      );
+      console.log(cameraPosition.current.position);
+    }
+    // if (cameraTarget.current) {
+    //   cameraTarget.current.position.set(
+    //     ...lerpVector(MIN_CAMERA_TARGET, MAX_CAMERA_TARGET, t).toArray()
+    //   );
+    //   console.log(cameraTarget.current.position);
+    // }
+  });
 
   return (
     <RigidBody
@@ -259,19 +320,20 @@ export const CharacterController = () => {
       )}
     >
       <group ref={container}>
-        <group ref={cameraTarget} position-z={0.5} />
-        <group ref={cameraPosition} position-y={5} position-z={-3.5}>
+        {/* <group ref={cameraTarget} position-z={0.5} /> */}
+        <group ref={cameraTarget} position-z={0} />
+        <group ref={cameraPosition} position={[0, 5, -3.5]}>
           <group
             ref={cameraRotation}
             rotation={[0.9, 0, 0]}
-            position-y={-1.6}
+            position-y={-1.8}
             position-z={1.25}
           >
             <Camera />
           </group>
         </group>
-        <group ref={lightPosition}>
-          <pointLight intensity={100} />
+        <group position-y={0.1}>
+          <pointLight intensity={3} distance={15} />
         </group>
         <group ref={character}>
           <Airplane scale={0.18} position-y={-0.25} visible={isFlying} />
@@ -285,6 +347,7 @@ export const CharacterController = () => {
         </group>
       </group>
       <CapsuleCollider
+        ref={collider}
         args={[0.08, 0.15]}
         onCollisionEnter={({ other }) => {
           const userData = other.rigidBody?.userData as UserData;
