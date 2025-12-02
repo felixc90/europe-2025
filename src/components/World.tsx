@@ -1,6 +1,6 @@
 import { interactionGroups, RigidBody } from "@react-three/rapier";
 import WaterMaterial from "../materials/WaterMaterial";
-import { useGLTF } from "@react-three/drei";
+import { useGLTF, useTexture } from "@react-three/drei";
 import { CollisionGroup } from "../constants/CollisionGroup";
 import { useEffect } from "react";
 import { useMapStore } from "../stores/mapStore";

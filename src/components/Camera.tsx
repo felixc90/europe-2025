@@ -77,12 +77,17 @@ const Camera = () => {
       visible={cameraState != CameraState.OFF}
       position={[0, -CAMERA_HEIGHT / 2 - RADIUS, 0]}
       rotation={[0, Math.PI, 0]}
+      renderOrder={999}
     >
       <group ref={container} rotation={[OFF_ROTATION, 0, 0]}>
         <group position={[0, CAMERA_HEIGHT / 2 + RADIUS, 0]}>
           <mesh>
             <boxGeometry args={[CAMERA_WIDTH, CAMERA_HEIGHT, CAMERA_DEPTH]} />
-            <meshBasicMaterial color="red" depthTest={false} />
+            <meshBasicMaterial
+              color="red"
+              depthTest={false}
+              depthWrite={false}
+            />
           </mesh>
           <group position={[0, 0, CAMERA_DEPTH / 2 + 0.01]}>
             <group
@@ -95,7 +100,11 @@ const Camera = () => {
             />
             <mesh>
               <planeGeometry args={[CAMERA_WIDTH, CAMERA_HEIGHT]} />
-              <meshBasicMaterial color="#121212" />
+              <meshBasicMaterial
+                color="#121212"
+                depthTest={false}
+                depthWrite={false}
+              />
             </mesh>
           </group>
         </group>
