@@ -8,7 +8,7 @@ import {
   RigidBody,
 } from "@react-three/rapier";
 import { useControls } from "leva";
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   clamp,
   degToRad,
@@ -81,24 +81,25 @@ export const CharacterController = () => {
   const cameraWorldPosition = useRef(new THREE.Vector3());
   const cameraLookAtWorldPosition = useRef(new THREE.Vector3());
   const cameraLookAt = useRef(new THREE.Vector3());
+  const dirLight = useRef<THREE.DirectionalLight>(null);
 
   const characterRotationTarget = useRef(0);
-  const lightPosition = useRef<THREE.Group>(null);
 
   const [animation, setAnimation] = useState("idle");
   const { cameraState } = useCameraStore();
-  const { isFlying } = useCharacterStore();
+  const { isFlying, setIsFlying } = useCharacterStore();
   const { convexHulls } = useMapStore();
+
+  useEffect(() => {
+    if (dirLight.current && character.current) {
+      dirLight.current.target = character.current;
+    }
+  }, []);
 
   // https://www.youtube.com/watch?v=TicipSVT-T8
   // Update movement
   useFrame(({ camera }) => {
     if (!rb.current) return;
-    // console.log(
-    //   rb.current.translation().x,
-    //   rb.current.translation().y,
-    //   rb.current.translation().z
-    // );
     if (cameraState == CameraState.OFF) {
       const vel = rb.current.linvel();
       const movement = { x: 0, z: 0 };
@@ -232,23 +233,6 @@ export const CharacterController = () => {
     rb.current.setRotation(rotationQuat, true);
   });
 
-  // Update light position
-  useFrame(() => {
-    return;
-    if (!lightPosition.current) return;
-
-    // Set the light at the fixed altitude in the same direction
-    // const fixedLightPos = cameraPosition.current?.position
-    //   .normalize()
-    //   .multiplyScalar(7.5);
-
-    // lightPosition.current.position.set(
-    //   fixedLightPos?.x ?? 0,
-    //   fixedLightPos?.y ?? 0,
-    //   fixedLightPos?.z ?? 0
-    // );
-  });
-
   // Update character rotation
   useFrame(() => {
     if (!cameraTarget.current || !cameraPosition.current) return;
@@ -320,20 +304,19 @@ export const CharacterController = () => {
       )}
     >
       <group ref={container}>
-        {/* <group ref={cameraTarget} position-z={0.5} /> */}
-        <group ref={cameraTarget} position-z={0} />
+        <group ref={cameraTarget} position-z={0.5} />
         <group ref={cameraPosition} position={[0, 5, -3.5]}>
           <group
             ref={cameraRotation}
             rotation={[0.9, 0, 0]}
-            position-y={-1.8}
+            position-y={-1.6}
             position-z={1.25}
           >
             <Camera />
           </group>
         </group>
-        <group position-y={0.1}>
-          <pointLight intensity={3} distance={15} />
+        <group position-y={10} position-z={-5}>
+          <directionalLight intensity={0.5} ref={dirLight} />
         </group>
         <group ref={character}>
           <Airplane scale={0.18} position-y={-0.25} visible={isFlying} />
@@ -352,7 +335,7 @@ export const CharacterController = () => {
         onCollisionEnter={({ other }) => {
           const userData = other.rigidBody?.userData as UserData;
           if (userData.type == CollisionGroup.WATER) {
-            // setFlying(true);
+            setIsFlying(true);
           }
           /* ... */
         }}

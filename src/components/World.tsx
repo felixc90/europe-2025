@@ -10,6 +10,19 @@ import { ConvexHull } from "three/examples/jsm/Addons.js";
 const World = () => {
   const { nodes } = useGLTF("models/world.glb");
   const { setMapObjects, setConvexHulls } = useMapStore();
+  const [
+    australiaTexture,
+    newZealandTexture,
+    antarticaTexture,
+    southAmericaTexture,
+    northAmericaTexture,
+  ] = useTexture([
+    "/textures/text/au_text.png",
+    "/textures/text/nz_text.png",
+    "/textures/text/aq_text.png",
+    "/textures/text/sa_text.png",
+    "/textures/text/na_text.png",
+  ]);
 
   useEffect(() => {
     setMapObjects(nodes);
@@ -45,7 +58,11 @@ const World = () => {
       >
         <group name="Australia">
           <primitive object={nodes.au}>
-            <meshStandardMaterial color="#5fd18f" />
+            <meshStandardMaterial
+              color="#5fd18f"
+              bumpMap={australiaTexture}
+              bumpScale={-10}
+            />
           </primitive>
           <primitive object={nodes.au_base}>
             <meshStandardMaterial color="#d6c3a6" />
@@ -59,7 +76,11 @@ const World = () => {
         </group>
         <group name="New Zealand">
           <primitive object={nodes.nz}>
-            <meshStandardMaterial color="#555555" />
+            <meshStandardMaterial
+              color="#555555"
+              bumpMap={newZealandTexture}
+              bumpScale={-10}
+            />
           </primitive>
           <primitive object={nodes.nz_base}>
             <meshStandardMaterial color="#d6c3a6" />
@@ -67,7 +88,11 @@ const World = () => {
         </group>
         <group name="Antartica">
           <primitive object={nodes.aq}>
-            <meshStandardMaterial color="#D8ECF3" />
+            <meshStandardMaterial
+              color="#D8ECF3"
+              bumpMap={antarticaTexture}
+              bumpScale={-10}
+            />
           </primitive>
           <primitive object={nodes.aq_base}>
             <meshStandardMaterial color="#d6c3a6" />
@@ -75,7 +100,11 @@ const World = () => {
         </group>
         <group name="North America">
           <primitive object={nodes.na}>
-            <meshStandardMaterial color="#2A7E8C" />
+            <meshStandardMaterial
+              color="#2A7E8C"
+              bumpMap={northAmericaTexture}
+              bumpScale={-10}
+            />
           </primitive>
           <primitive object={nodes.na_base}>
             <meshStandardMaterial color="#d6c3a6" />
@@ -83,7 +112,11 @@ const World = () => {
         </group>
         <group name="South America">
           <primitive object={nodes.sa}>
-            <meshStandardMaterial color="#4fa565" />
+            <meshStandardMaterial
+              color="#4fa565"
+              bumpMap={southAmericaTexture}
+              bumpScale={-10}
+            />
           </primitive>
           <primitive object={nodes.sa_base}>
             <meshStandardMaterial color="#d6c3a6" />
@@ -111,12 +144,6 @@ const World = () => {
           <meshStandardMaterial color="#4A7BBE" />
         </primitive>
         <primitive object={nodes.Europe_base}>
-          <meshStandardMaterial color="#d6c3a6" />
-        </primitive>
-        <primitive object={nodes.South_America}>
-          <meshStandardMaterial color="#4fa565" />
-        </primitive>
-        <primitive object={nodes.South_America_base}>
           <meshStandardMaterial color="#d6c3a6" />
         </primitive>
         <primitive object={nodes.Africa}>
